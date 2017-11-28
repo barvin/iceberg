@@ -1,2 +1,2 @@
 # iceberg
-Yet another Java automation framework
+Java automation framework that uses Gradle, TestNG, ReportPortal, Selenide
