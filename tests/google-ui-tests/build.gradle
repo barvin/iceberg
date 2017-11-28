@@ -2,6 +2,7 @@ description = 'Google UI tests'
 
 dependencies {
     compile project(':config')
+    compile project(':reports')
     compile project(':business-steps:google-ui-steps')
     compile "com.epam.reportportal:agent-java-testng:${depVersions.rpAgentJavaTestNg}"
     compile "org.codehaus.groovy:groovy-all:${depVersions.groovy}"
@@ -28,11 +29,4 @@ test {
     }
 
     systemProperties System.properties
-    systemProperties.putIfAbsent('rp.endpoint', '')
-    systemProperties.putIfAbsent('rp.uuid', '')
-    systemProperties.putIfAbsent('rp.project', '')
-    systemProperties.putIfAbsent('rp.launch', 'Google')
-    systemProperties.putIfAbsent('rp.mode', 'DEFAULT')
-    systemProperties.putIfAbsent('rp.batch.size.logs', '10')
-
 }
