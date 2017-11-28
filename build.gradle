@@ -1,0 +1,26 @@
+subprojects {
+    apply plugin: 'java'
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    repositories {
+        jcenter()
+        maven { url 'http://dl.bintray.com/epam/reportportal' }
+    }
+
+    ext.depVersions = [
+        slf4j: '1.7.25',
+        logback: '1.2.3',
+        rpLogback: '3.0.0',
+        rpAgentJavaTestNg: '3.0.6',
+        selenide: '4.8',
+        groovy: '2.4.13',
+        testng: '6.11'
+    ]
+
+    dependencies {
+        compile "org.slf4j:slf4j-api:${depVersions.slf4j}"
+        compile "ch.qos.logback:logback-classic:${depVersions.logback}"
+        compile "com.epam.reportportal:logger-java-logback:${depVersions.rpLogback}"
+    }
+}
