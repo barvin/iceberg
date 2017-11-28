@@ -1,4 +1,4 @@
-package org.home.steps;
+package org.home.aspects;
 
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +19,7 @@ import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
 
 @Aspect
-public class SelenideElementsAspect {
+public class StepStatementsAspect {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("ACTION");
 
