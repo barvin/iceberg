@@ -1,12 +1,19 @@
 description = 'Google UI tests'
 
+apply plugin: 'application'
+
 dependencies {
     compile project(':config')
-    compile project(':reports')
     compile project(':business-steps:google-ui-steps')
-    compile "com.epam.reportportal:agent-java-testng:${depVersions.rpAgentJavaTestNg}"
+    compile project(':reports:report-portal-testng-agent')
     compile "org.codehaus.groovy:groovy-all:${depVersions.groovy}"
     testCompile "org.testng:testng:${depVersions.testng}"
+}
+
+mainClassName = 'org.iceberg.runner.Runner'
+
+run {
+    systemProperties System.getProperties()
 }
 
 test {
@@ -16,7 +23,7 @@ test {
     options {
         parallel = 'methods'
         threadCount = 2
-        listeners = ['com.epam.reportportal.testng.ReportPortalTestNGListener'].toSet()
+        listeners = ['com.epam.reportportal.testng.IcebergTestNGListener'].toSet()
     }
 
     ignoreFailures = true
@@ -27,6 +34,5 @@ test {
         events "started", "passed", "failed", "skipped"
         exceptionFormat "short"
     }
-
-    systemProperties System.properties
+    systemProperties System.getProperties()
 }

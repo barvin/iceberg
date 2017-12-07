@@ -1,0 +1,7 @@
+description = 'Report Portal TestNg agent'
+
+dependencies {
+    compile "org.qatools:report-portal-client:1.0.0"
+    compile "com.epam.reportportal:commons-model:${depVersions.rpModel}"
+    compile "org.testng:testng:${depVersions.testng}"
+}

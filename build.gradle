@@ -5,17 +5,17 @@ subprojects {
 
     repositories {
         jcenter()
-        maven { url 'http://dl.bintray.com/epam/reportportal' }
+        maven { url 'https://dl.bintray.com/mbarvinskyi/qatools' }
     }
 
     ext.depVersions = [
-        slf4j: '1.7.25',
-        logback: '1.2.3',
-        rpLogback: '3.0.0',
-        rpAgentJavaTestNg: '3.0.6',
-        selenide: '4.8',
-        groovy: '2.4.13',
-        testng: '6.11'
+        slf4j            : '1.7.25',
+        logback          : '1.2.3',
+        rpLogback        : '3.0.0',
+        rpModel          : '3.3.0',
+        selenide         : '4.8',
+        groovy           : '2.4.13',
+        testng           : '6.11'
     ]
 
     dependencies {
