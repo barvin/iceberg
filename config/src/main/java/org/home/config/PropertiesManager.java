@@ -30,7 +30,6 @@ public class PropertiesManager {
             } else {
                 System.setProperties(groupProps);
             }
-            LOGGER.info("!!!!!!!!!!! BROWSER: " + System.getProperty("browser"));
 
         } catch (IOException e) {
             LOGGER.error(e.getLocalizedMessage(), e);

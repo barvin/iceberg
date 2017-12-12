@@ -1,31 +1,36 @@
 package org.home.reportportal;
 
+import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import com.epam.reportportal.service.ReportPortal;
+import com.epam.ta.reportportal.ws.model.EntryCreatedRS;
+import com.epam.ta.reportportal.ws.model.TestItemResource;
+import com.epam.ta.reportportal.ws.model.launch.LaunchResource;
+import org.home.reportportal.exceptions.RpException;
+import org.iceberg.test_commons.Component;
 import org.qatools.rp.ReportPortalClient;
 import org.qatools.rp.exceptions.ReportPortalClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.IAttributes;
-import org.testng.ISuite;
-import org.testng.ISuiteResult;
 import org.testng.ITestContext;
 import org.testng.ITestResult;
 
 import com.epam.ta.reportportal.ws.model.FinishExecutionRQ;
-import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
-import com.epam.ta.reportportal.ws.model.issue.Issue;
 import com.epam.ta.reportportal.ws.model.launch.Mode;
 import com.epam.ta.reportportal.ws.model.launch.StartLaunchRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 
 public class ReportPortalService {
     private static final String RP_ID = "rp_id";
+    private static final boolean SINGLE_THREAD_LAUNCH = "true".equals(System.getProperty("rp.single.thread.launch"));
+    private static final String DEFAULT_COMPONENT = "Undefined component";
     private ReportPortalClient reportPortal;
-    private String launchId;
+    private TestContext testContext;
     private static final Logger LOGGER = LoggerFactory.getLogger(ReportPortalService.class);
     private static final String RP_BASE_URL = System.getProperty("rp.endpoint");
     private static final String RP_UUID = System.getProperty("rp.uuid");
@@ -36,26 +41,55 @@ public class ReportPortalService {
 
     public ReportPortalService() {
         this.reportPortal = new ReportPortalClient(RP_BASE_URL, RP_PROJECT, RP_UUID);
+        this.testContext = new TestContext();
     }
 
     public void startLaunch() {
-        StartLaunchRQ rq = new StartLaunchRQ();
-        rq.setName(RP_LAUNCH_NAME);
-        rq.setMode(RP_MODE);
-        rq.setStartTime(Calendar.getInstance().getTime());
-        rq.setTags(RpUtils.parseAsSet(RP_LAUNCH_TAGS));
-        try {
-            this.launchId = reportPortal.startLaunch(rq);
-        } catch (ReportPortalClientException e) {
-            LOGGER.error("Could not start RP launch", e);
+        if (System.getProperty("rp.launch.id") == null) {
+            if (!SINGLE_THREAD_LAUNCH) {
+                Map<String, Object> filter = new HashMap<>();
+                filter.put("filter.eq.name", RP_LAUNCH_NAME);
+                if (RP_LAUNCH_TAGS != null) {
+                    filter.put("filter.has.tags", RP_LAUNCH_TAGS.replace(";", ","));
+                }
+                filter.put("page.sort", "start_time,DESC");
+                List<LaunchResource> launches = null;
+                try {
+                    launches = reportPortal.getLaunches(filter);
+                } catch (ReportPortalClientException e) {
+                    throw new RpException("Unable to get list of launches from ReportPortal", e);
+                }
+                for (LaunchResource launch : launches) {
+                    LOGGER.info("RP Launch found: name: '{}', number: {}, status: {}", launch.getName(), launch.getNumber(),
+                            launch.getStatus());
+                    if ("IN_PROGRESS".equals(launch.getStatus())) {
+                        testContext.setLaunchId(launch.getLaunchId());
+                        return;
+                    }
+                }
+            }
+
+            StartLaunchRQ rq = new StartLaunchRQ();
+            rq.setName(RP_LAUNCH_NAME);
+            rq.setMode(RP_MODE);
+            rq.setStartTime(Calendar.getInstance().getTime());
+            rq.setTags(RpUtils.parseAsSet(RP_LAUNCH_TAGS));
+            try {
+                testContext.setLaunchId(reportPortal.startLaunch(rq));
+            } catch (ReportPortalClientException e) {
+                LOGGER.error("Could not start RP launch", e);
+            }
+        } else {
+            testContext.setLaunchId(System.getProperty("rp.launch.id"));
         }
+        com.epam.reportportal.service.ReportPortalClient client = new ReportPortal()
     }
 
     public void finishLaunch() {
         FinishExecutionRQ rq = new FinishExecutionRQ();
         rq.setEndTime(Calendar.getInstance().getTime());
         try {
-            reportPortal.finishLaunch(launchId, rq);
+            reportPortal.finishLaunch(testContext.getLaunchId(), rq);
         } catch (ReportPortalClientException e) {
             LOGGER.error("Could not finish RP launch", e);
         }
@@ -83,14 +117,49 @@ public class ReportPortalService {
     }
 
     public void startTestMethod(ITestResult testResult) {
-//        StartTestItemRQ rq = buildStartStepRq(testResult);
-//        if (rq == null)
-//            return;
-//        Maybe<String> stepMaybe = reportPortal
-//                .startTestItem(this.<Maybe<String>>getAttribute(testResult.getTestContext(), RP_ID), rq);
-//
-//        testResult.setAttribute(RP_ID, stepMaybe);
-        LOGGER.info("startTestMethod " + testResult.getName());
+        if (testResult.getAttribute(RP_ID) != null) {
+            return;
+        }
+
+        String component = getComponentFromTest(testResult);
+        if (!retrieveAndSetCurrentComponentSuiteId(component)) {
+            startsNewComponentSuite(component);
+        }
+
+        String testPath = testResult.getTestClass().getName() + testResult.getMethod().getMethodName();
+        String testName = testResult.getMethod().getDescription();
+        if (!testPath.equals(testContext.getCurrentTestPath())) {
+            if (testContext.getCurrentTestPath() != null) {
+                finishTest();
+            }
+            startTest(testName, createTestDescription(testResult));
+            testContext.setCurrentTestPath(testPath);
+            testContext.setCurrentTestDataRowNumber(1);
+        } else {
+            testContext.nextTestDataRowNumber();
+        }
+
+        StartTestItemRQ rq = new StartTestItemRQ();
+        rq.setName(testName);
+        rq.setLaunchId(testContext.getLaunchId());
+        rq.setDescription(createTestRowDescription(testResult));
+        rq.setStartTime(Calendar.getInstance().getTime());
+        rq.setType("STEP");
+        rq.setTags(getTestRowTags(testResult));
+        EntryCreatedRS rs = null;
+        try {
+            rs = reportPortal.startTestItem(testContext.getCurrentTestId(), rq);
+        } catch (ReportPortalClientException e) {
+            LOGGER.error("Unable start test row: '{}'", testName);
+        }
+        if (rs != null) {
+            testResult.setAttribute(RP_ID, rs.getId());
+            ReportPortalListenerContext.setRunningNowItemId(rs.getId());
+            if (isTestParametrized(testResult)) {
+                RpUtils.printExamplesTableRow(testResult.getParameters()[0].toString());
+                RpUtils.printNestedExampleTables(((TestDataMap) testResult.getParameters()[0]).getParameters());
+            }
+        }
     }
 
     public void finishTestMethod(String status, ITestResult testResult) {
@@ -177,6 +246,53 @@ public class ReportPortalService {
             stringBuffer.append(" ] ");
         }
         return stringBuffer.toString();
+    }
+
+    private String getComponentFromTest(ITestResult testResult) {
+        return Arrays.stream(testResult.getMethod().getGroups()).filter(Component::isComponent).findFirst()
+                .orElse(DEFAULT_COMPONENT);
+    }
+
+    private boolean retrieveAndSetCurrentComponentSuiteId(String component) {
+        List<TestItemResource> componentSuites = getComponentSuites(testContext.getCurrentComponentSuiteId());
+        if (componentSuites != null) {
+            for (TestItemResource componentSuite : componentSuites) {
+                if (componentSuite.getName().equals(component)) {
+                    testContext.setCurrentComponentSuiteId(componentSuite.getItemId());
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private List<TestItemResource> getComponentSuites(String teamSuiteId) {
+        Map<String, String> filter = new HashMap<>();
+        filter.put("filter.eq.parent", teamSuiteId);
+        filter.put("page.page", "1");
+        filter.put("page.size", "50");
+        filter.put("page.sort", "start_time,ASC");
+        try {
+            return reportPortal.getAllTestItems(filter);
+        } catch (ReportPortalClientException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return null;
+    }
+
+    private void startsNewComponentSuite(String component) {
+        StartTestItemRQ rq = new StartTestItemRQ();
+        rq.setLaunchId(testContext.getLaunchId());
+        rq.setName(component);
+        rq.setStartTime(Calendar.getInstance().getTime());
+        rq.setType("SUITE");
+        try {
+            EntryCreatedRS rs = reportPortal.startRootTestItem(rq);
+            testContext.setCurrentComponentSuiteId(rs.getId());
+            testContext.addComponentSuiteToCache(rs.getId(), SINGLE_THREAD_LAUNCH);
+        } catch (ReportPortalClientException e) {
+            LOGGER.error("Unable to start component suite in ReportPortal", e);
+        }
     }
 
 }
