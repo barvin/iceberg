@@ -6,14 +6,20 @@ dependencies {
     compile project(':config')
     compile project(':business-steps:google-ui-steps')
     compile project(':reports:report-portal-testng-agent')
-    compile "org.codehaus.groovy:groovy-all:${depVersions.groovy}"
-    testCompile "org.testng:testng:${depVersions.testng}"
+    compile "org.testng:testng:${depVersions.testng}"
 }
 
 mainClassName = 'org.iceberg.runner.Runner'
 
 run {
+    if (System.getProperty('args') != null) {
+        args System.getProperty('args').split(' ')
+    }
     systemProperties System.getProperties()
+}
+
+sourceSets {
+    test.java.srcDir "src/main"
 }
 
 test {
@@ -21,9 +27,10 @@ test {
     useTestNG()
     include System.getProperty('testng.tests', '**/*.class')
     options {
-        parallel = 'methods'
-        threadCount = 2
-        listeners = ['com.epam.reportportal.testng.IcebergTestNGListener'].toSet()
+        listeners = [
+            'org.iceberg.reportportal.IcebergTestNGListener',
+            'com.codeborne.selenide.testng.ScreenShooter'
+        ].toSet()
     }
 
     ignoreFailures = true
@@ -32,7 +39,9 @@ test {
 
     testLogging {
         events "started", "passed", "failed", "skipped"
-        exceptionFormat "short"
+        showStandardStreams true
+        showStackTraces true
+        exceptionFormat "full"
     }
     systemProperties System.getProperties()
 }
