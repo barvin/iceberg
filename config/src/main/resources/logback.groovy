@@ -3,7 +3,7 @@ appender("STDOUT", ConsoleAppender) {
         pattern = "%date %level [%logger{0}]: %msg%n"
     }
 }
-appender("ReportPortalAppender", com.epam.reportportal.logback.appender.ReportPortalAppender) {
+appender("ReportPortalAppender", org.iceberg.reportportal.logback.appender.ReportPortalAppender) {
     encoder(PatternLayoutEncoder) {
         pattern = "%level [%logger{0}]: %msg%n"
     }

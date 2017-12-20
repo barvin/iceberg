@@ -3,10 +3,10 @@ package org.iceberg.runner;
 import java.io.File;
 import java.io.IOException;
 
-import org.home.config.PropertiesManager;
-import org.home.config.TestType;
-import org.home.reportportal.IcebergTestNGListener;
-import org.home.tests.GoogleTest;
+import org.iceberg.config.PropertiesManager;
+import org.iceberg.config.TestType;
+import org.iceberg.reportportal.IcebergTestNGListener;
+import org.iceberg.tests.GoogleTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.ITestNGListener;
@@ -24,7 +24,6 @@ public class Runner {
         }
         LOGGER.info("ROLE: " + role);
         if ("leader".equals(role)) {
-            new PropertiesManager().initProperties(TestType.WEB);
             try {
                 int exitValue = exec(Runner.class, "role=worker");
                 LOGGER.info("exitValue = {}", exitValue);

@@ -9,18 +9,18 @@ subprojects {
     }
 
     ext.depVersions = [
-        slf4j            : '1.7.25',
-        logback          : '1.2.3',
-        rpLogback        : '3.0.0',
-        rpModel          : '3.3.0',
-        selenide         : '4.8',
-        groovy           : '2.4.13',
-        testng           : '6.11'
+        slf4j      : '1.7.25',
+        logback    : '1.2.3',
+        rpClient   : '1.1.2',
+        selenide   : '4.8',
+        groovy     : '2.4.13',
+        commonsLang: '3.7',
+        testng     : '6.11'
     ]
 
     dependencies {
         compile "org.slf4j:slf4j-api:${depVersions.slf4j}"
         compile "ch.qos.logback:logback-classic:${depVersions.logback}"
-        compile "com.epam.reportportal:logger-java-logback:${depVersions.rpLogback}"
+        compile "org.codehaus.groovy:groovy-all:${depVersions.groovy}"
     }
 }
