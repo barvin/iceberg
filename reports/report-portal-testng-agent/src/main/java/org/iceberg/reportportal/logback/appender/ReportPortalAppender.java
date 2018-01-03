@@ -36,7 +36,7 @@ public class ReportPortalAppender extends AppenderBase<ILoggingEvent> {
                 if (MESSAGE_PARSER.supports(message)) {
                     ReportPortalMessage rpMessage = MESSAGE_PARSER.parse(message);
                     TypeAwareByteSource data = rpMessage.getData();
-                    com.epam.ta.reportportal.ws.model.log.SaveLogRQ.File file = new com.epam.ta.reportportal.ws.model.log.SaveLogRQ.File();
+                    SaveLogRQ.File file = new SaveLogRQ.File();
                     file.setContent(data.read());
                     file.setContentType(data.getMediaType());
                     file.setName(UUID.randomUUID().toString());
