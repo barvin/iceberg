@@ -1,27 +1,4 @@
-package org.iceberg.reportportal;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.StringUtils;
-import org.iceberg.test_commons.AppComponent;
-import org.qatools.rp.ReportPortalClient;
-import org.qatools.rp.exceptions.ReportPortalClientException;
-import org.qatools.rp.message.HashMarkSeparatedMessageParser;
-import org.qatools.rp.message.MessageParser;
-import org.qatools.rp.message.ReportPortalMessage;
-import org.qatools.rp.message.TypeAwareByteSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.ITestResult;
+package org.qatools.reportportal;
 
 import com.epam.ta.reportportal.ws.model.EntryCreatedRS;
 import com.epam.ta.reportportal.ws.model.FinishExecutionRQ;
@@ -32,15 +9,36 @@ import com.epam.ta.reportportal.ws.model.launch.Mode;
 import com.epam.ta.reportportal.ws.model.launch.StartLaunchRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 import com.google.common.collect.Sets;
+import org.apache.commons.lang3.StringUtils;
+import org.qatools.rp.ReportPortalClient;
+import org.qatools.rp.exceptions.ReportPortalClientException;
+import org.qatools.rp.message.HashMarkSeparatedMessageParser;
+import org.qatools.rp.message.MessageParser;
+import org.qatools.rp.message.ReportPortalMessage;
+import org.qatools.rp.message.TypeAwareByteSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testng.ITestResult;
 
-public class ReportPortalServiceImpl implements IReportPortalService {
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+public class ReportPortalService implements IReportPortalService {
     private static final MessageParser MESSAGE_PARSER = new HashMarkSeparatedMessageParser();
     private static final String RP_ID = "rp_id";
-    private static final String DEFAULT_COMPONENT = "Undefined component";
     private ReportPortalClient reportPortal;
     private TestContext testContext;
     private boolean needToStartAndFinishLaunch;
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReportPortalServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReportPortalService.class);
     private static final String RP_BASE_URL = System.getProperty("rp.endpoint");
     private static final String RP_UUID = System.getProperty("rp.uuid");
     private static final String RP_PROJECT = System.getProperty("rp.project");
@@ -48,7 +46,7 @@ public class ReportPortalServiceImpl implements IReportPortalService {
     private static final Mode RP_MODE = Mode.valueOf(System.getProperty("rp.mode"));
     private static final String RP_LAUNCH_TAGS = System.getProperty("rp.tags");
 
-    public ReportPortalServiceImpl() {
+    public ReportPortalService() {
         this.reportPortal = new ReportPortalClient(RP_BASE_URL, RP_PROJECT, RP_UUID);
         this.testContext = new TestContext();
         this.needToStartAndFinishLaunch = System.getProperty("rp.launch.id") == null;
@@ -95,11 +93,7 @@ public class ReportPortalServiceImpl implements IReportPortalService {
         if (testResult.getAttribute(RP_ID) != null) {
             return;
         }
-
-        String component = getComponentFromTest(testResult);
-        if (!retrieveAndSetCurrentComponentSuiteId(component)) {
-            startsNewComponentSuite(component);
-        }
+        createPathIfNeeded(testResult);
 
         String testPath = testResult.getTestClass().getName() + testResult.getMethod().getMethodName();
         String testName = testResult.getMethod().getDescription();
@@ -193,18 +187,17 @@ public class ReportPortalServiceImpl implements IReportPortalService {
     private void finishSuites() {
         FinishTestItemRQ rq = new FinishTestItemRQ();
         rq.setEndTime(Calendar.getInstance().getTime());
-        finishComponentSuites(testContext.getComponentSuitesCache(), rq);
+        finishAllSuitesRecursively(rq);
     }
 
-    private void finishComponentSuites(Deque<String> suites, FinishTestItemRQ rq) {
-        String suiteId;
-        while (null != (suiteId = suites.poll())) {
-            try {
-                reportPortal.finishTestItem(suiteId, rq);
-            } catch (ReportPortalClientException e) {
-                LOGGER.error("Unable to finish test suite in ReportPortal", e);
-            }
-        }
+    private void finishAllSuitesRecursively(FinishTestItemRQ rq) {
+        // TODO: implement recursive deleting of suites with children
+//        String suiteId;
+//        try {
+//            reportPortal.finishTestItem(rq);
+//        } catch (ReportPortalClientException e) {
+//            LOGGER.error("Unable to finish test suite in ReportPortal", e);
+//        }
     }
 
     private void startTest(String testName, String description) {
@@ -216,7 +209,7 @@ public class ReportPortalServiceImpl implements IReportPortalService {
         rq.setType("TEST");
         EntryCreatedRS rs;
         try {
-            rs = reportPortal.startTestItem(testContext.getCurrentComponentSuiteId(), rq);
+            rs = reportPortal.startTestItem(testContext.getCurrentSuiteId(), rq);
             testContext.setCurrentTestId(rs.getId());
             testContext.setCurrentTestStatus(Statuses.PASSED);
         } catch (ReportPortalClientException e) {
@@ -238,17 +231,27 @@ public class ReportPortalServiceImpl implements IReportPortalService {
         testContext.setConfigurationFailure(null);
     }
 
-    private String getComponentFromTest(ITestResult testResult) {
-        return Arrays.stream(testResult.getMethod().getGroups()).filter(AppComponent::isComponent).findFirst()
-                .orElse(DEFAULT_COMPONENT);
+    private void createPathIfNeeded(ITestResult testResult) {
+        String parentId = testContext.getLaunchId();
+        for (Function<ITestResult, String> function : getPathFunctions()) {
+            String suiteName = function.apply(testResult);
+            if (!retrieveAndSetCurrentSuiteId(parentId, suiteName)) {
+                startsNewSuite(parentId, suiteName);
+            }
+            parentId = testContext.getCurrentSuiteId();
+        }
     }
 
-    private boolean retrieveAndSetCurrentComponentSuiteId(String component) {
-        List<TestItemResource> componentSuites = getComponentSuites();
+    protected List<Function<ITestResult, String>> getPathFunctions() {
+        return Collections.emptyList();
+    }
+
+    private boolean retrieveAndSetCurrentSuiteId(String parentId, String suiteName) {
+        List<TestItemResource> componentSuites = getSuites(parentId);
         if (componentSuites != null) {
             for (TestItemResource componentSuite : componentSuites) {
-                if (componentSuite.getName().equals(component)) {
-                    testContext.setCurrentComponentSuiteId(componentSuite.getItemId());
+                if (componentSuite.getName().equals(suiteName)) {
+                    testContext.setCurrentSuiteId(componentSuite.getItemId());
                     return true;
                 }
             }
@@ -256,10 +259,9 @@ public class ReportPortalServiceImpl implements IReportPortalService {
         return false;
     }
 
-    private List<TestItemResource> getComponentSuites() {
+    private List<TestItemResource> getSuites(String parentId) {
         Map<String, String> filter = new HashMap<>();
-        filter.put("filter.eq.launch", testContext.getLaunchId());
-        filter.put("filter.size.path", "0");
+        filter.put("filter.eq.launch", parentId);
         filter.put("page.page", "1");
         filter.put("page.size", "50");
         filter.put("page.sort", "start_time,ASC");
@@ -271,18 +273,15 @@ public class ReportPortalServiceImpl implements IReportPortalService {
         return null;
     }
 
-    private void startsNewComponentSuite(String component) {
+    private void startsNewSuite(String parentId, String component) {
         StartTestItemRQ rq = new StartTestItemRQ();
-        rq.setLaunchId(testContext.getLaunchId());
+        rq.setLaunchId(parentId);
         rq.setName(component);
         rq.setStartTime(Calendar.getInstance().getTime());
         rq.setType("SUITE");
         try {
             EntryCreatedRS rs = reportPortal.startRootTestItem(rq);
-            testContext.setCurrentComponentSuiteId(rs.getId());
-            if (needToStartAndFinishLaunch) {
-                testContext.addComponentSuiteToCache(rs.getId());
-            }
+            testContext.setCurrentSuiteId(rs.getId());
         } catch (ReportPortalClientException e) {
             LOGGER.error("Unable to start component suite in ReportPortal", e);
         }
@@ -310,8 +309,8 @@ public class ReportPortalServiceImpl implements IReportPortalService {
 
     private Set<String> getTestRowTags(ITestResult testResult) {
         Set<String> tags = Sets.newHashSet("type:API");
-        List<String> groupsList = Arrays.asList(testResult.getMethod().getGroups());
-        groupsList.stream().filter(AppComponent::isComponent).forEach(c -> tags.add("component:" + c));
+//        List<String> groupsList = Arrays.asList(testResult.getMethod().getGroups());
+//        groupsList.stream().filter(AppComponent::isComponent).forEach(c -> tags.add("component:" + c));
         return tags;
     }
 

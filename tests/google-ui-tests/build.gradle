@@ -28,7 +28,7 @@ test {
     include System.getProperty('testng.tests', '**/*.class')
     options {
         listeners = [
-            'org.iceberg.reportportal.IcebergTestNGListener',
+            'ReportPortalTestNGListener',
             'com.codeborne.selenide.testng.ScreenShooter'
         ].toSet()
     }

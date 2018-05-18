@@ -11,7 +11,7 @@ subprojects {
     ext.depVersions = [
         slf4j      : '1.7.25',
         logback    : '1.2.3',
-        rpClient   : '1.1.2',
+        rpClient   : '1.1.4',
         selenide   : '4.8',
         groovy     : '2.4.13',
         commonsLang: '3.7',

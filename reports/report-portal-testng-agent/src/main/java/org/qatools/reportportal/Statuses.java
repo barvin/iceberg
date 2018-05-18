@@ -1,4 +1,4 @@
-package org.iceberg.reportportal;
+package org.qatools.reportportal;
 
 public final class Statuses {
     public static final String PASSED = "PASSED";

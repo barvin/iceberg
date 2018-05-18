@@ -4,6 +4,7 @@ include ':tests:google-ui-tests'
 include ':business-steps:google-ui-steps'
 include ':business-interfaces:google-pages'
 include ':reports:report-portal-testng-agent'
+include ':reports:iceberg-rp-agent'
 include ':google-test-commons'
 
 project(':config').projectDir = "$rootDir/config" as File
@@ -12,4 +13,5 @@ project(':tests:google-ui-tests').projectDir = "$rootDir/tests/google-ui-tests" 
 project(':business-steps:google-ui-steps').projectDir = "$rootDir/business-steps/google-ui-steps" as File
 project(':business-interfaces:google-pages').projectDir = "$rootDir/business-interfaces/google-pages" as File
 project(':reports:report-portal-testng-agent').projectDir = "$rootDir/reports/report-portal-testng-agent" as File
+project(':reports:iceberg-rp-agent').projectDir = "$rootDir/reports/iceberg-rp-agent" as File
 

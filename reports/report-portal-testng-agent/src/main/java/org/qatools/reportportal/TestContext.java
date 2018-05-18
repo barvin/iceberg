@@ -1,7 +1,4 @@
-package org.iceberg.reportportal;
-
-import java.util.Deque;
-import java.util.LinkedList;
+package org.qatools.reportportal;
 
 /**
  * Context for TestNG Listener
@@ -11,14 +8,12 @@ public class TestContext {
 
     private String launchName;
     private String launchId;
-    private String currentComponentSuiteId;
+    private String currentSuiteId;
     private String currentTestPath;
     private String currentTestId;
     private String currentTestStatus;
     private int currentTestDataRowNumber;
     private Throwable configurationFailure;
-    private Deque<String> teamSuitesCache = new LinkedList<>();
-    private Deque<String> componentSuitesCache = new LinkedList<>();
 
     public String getLaunchName() {
         return launchName;
@@ -36,12 +31,12 @@ public class TestContext {
         this.launchId = launchId;
     }
 
-    public String getCurrentComponentSuiteId() {
-        return currentComponentSuiteId;
+    public String getCurrentSuiteId() {
+        return currentSuiteId;
     }
 
-    public void setCurrentComponentSuiteId(String currentComponentSuiteId) {
-        this.currentComponentSuiteId = currentComponentSuiteId;
+    public void setCurrentSuiteId(String currentSuiteId) {
+        this.currentSuiteId = currentSuiteId;
     }
 
     public String getCurrentTestPath() {
@@ -66,24 +61,6 @@ public class TestContext {
 
     public void setCurrentTestStatus(String currentTestStatus) {
         this.currentTestStatus = currentTestStatus;
-    }
-
-    public Deque<String> getTeamSuitesCache() {
-        return teamSuitesCache;
-    }
-
-    public void addTeamSuiteToCache(String suiteId, boolean isSingleThredLanch) {
-        if (isSingleThredLanch) {
-            teamSuitesCache.push(suiteId);
-        }
-    }
-
-    public Deque<String> getComponentSuitesCache() {
-        return componentSuitesCache;
-    }
-
-    public void addComponentSuiteToCache(String suiteId) {
-        componentSuitesCache.push(suiteId);
     }
 
     public Throwable getConfigurationFailure() {

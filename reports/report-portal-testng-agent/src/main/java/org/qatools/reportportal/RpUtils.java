@@ -1,4 +1,4 @@
-package org.iceberg.reportportal;
+package org.qatools.reportportal;
 
 import org.apache.commons.lang3.StringUtils;
 
