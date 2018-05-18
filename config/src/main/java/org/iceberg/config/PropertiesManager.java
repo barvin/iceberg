@@ -11,35 +11,18 @@ import org.slf4j.LoggerFactory;
 public class PropertiesManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(PropertiesManager.class);
     private static final String BASE_PROPS_PATH = "props/base.properties";
-    private static final String RP_PROPS_PATH = "props/reportportal.properties";
-    private static final String GROUPS_DIR_PATH = "props/groups/";
     private static final String ENVS_DIR_PATH = "props/envs/";
 
-    public static void loadReportPortalProperties() {
-        try {
-            Properties rpProps = new Properties();
-            rpProps.load(getResource(RP_PROPS_PATH));
-            addToSystemPropertiesWithoutOverriding(rpProps);
-        } catch (IOException e) {
-            LOGGER.error(e.getLocalizedMessage(), e);
-        }
-    }
-
-    public static void loadProperties(TestType testType) {
+    public static void loadProperties() {
         try {
             Properties baseProps = new Properties();
             baseProps.load(getResource(BASE_PROPS_PATH));
-
-            Properties groupProps = new Properties();
-            InputStream groupProperties = getResource(
-                    GROUPS_DIR_PATH + testType.toString().toLowerCase() + ".properties");
-            groupProps.load(groupProperties);
 
             Properties envProps = new Properties();
             if (System.getProperty("env") != null) {
                 envProps.load(getResource(ENVS_DIR_PATH + System.getProperty("env") + ".properties"));
             }
-            Properties propsFromPropFiles = mergePropertiesOverridingPrevious(baseProps, groupProps, envProps);
+            Properties propsFromPropFiles = mergePropertiesOverridingPrevious(baseProps, envProps);
             addToSystemPropertiesWithoutOverriding(propsFromPropFiles);
 
         } catch (IOException e) {

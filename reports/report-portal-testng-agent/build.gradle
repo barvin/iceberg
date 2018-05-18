@@ -1,8 +1,6 @@
 description = 'Report Portal TestNg agent'
 
 dependencies {
-    compile project(':google-test-commons')
-    compile project(':config')
     compile "org.qatools:report-portal-client:${depVersions.rpClient}"
     compile "org.testng:testng:${depVersions.testng}"
     compile "org.apache.commons:commons-lang3:${depVersions.commonsLang}"

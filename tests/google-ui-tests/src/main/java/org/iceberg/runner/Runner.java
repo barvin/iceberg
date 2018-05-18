@@ -3,9 +3,7 @@ package org.iceberg.runner;
 import java.io.File;
 import java.io.IOException;
 
-import org.iceberg.config.PropertiesManager;
-import org.iceberg.config.TestType;
-import org.iceberg.reportportal.IcebergTestNGListener;
+import org.qatools.reportportal.ReportPortalTestNGListener;
 import org.iceberg.tests.GoogleTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +33,7 @@ public class Runner {
             boolean isRpEnabled = "true".equals(System.getProperty("rp.enable"));
             if (isRpEnabled) {
                 testNG.setUseDefaultListeners(false);
-                testNG.addListener((ITestNGListener) new IcebergTestNGListener());
+                testNG.addListener((ITestNGListener) new ReportPortalTestNGListener());
             }
             testNG.setTestClasses(new Class[] { GoogleTest.class });
             testNG.run();

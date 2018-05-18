@@ -1,23 +1,25 @@
-package org.iceberg.reportportal;
+package org.qatools.reportportal;
 
-import org.iceberg.config.PropertiesManager;
 import org.testng.IExecutionListener;
 import org.testng.ITestContext;
 import org.testng.ITestNGListener;
 import org.testng.ITestResult;
 import org.testng.internal.IResultListener2;
 
-public class IcebergTestNGListener implements ITestNGListener, IExecutionListener, IResultListener2 {
+public class ReportPortalTestNGListener implements ITestNGListener, IExecutionListener, IResultListener2 {
 
     private IReportPortalService testNGService;
 
-    public IcebergTestNGListener() {
-        PropertiesManager.loadReportPortalProperties();
+    public ReportPortalTestNGListener() {
         if ("true".equals(System.getProperty("rp.enable"))) {
-            this.testNGService = new ReportPortalServiceImpl();
+            this.testNGService = new ReportPortalService();
         } else {
             this.testNGService = new ReportPortalServiceEmpty();
         }
+    }
+
+    public ReportPortalTestNGListener(IReportPortalService testNGService) {
+        this.testNGService = testNGService;
     }
 
     @Override

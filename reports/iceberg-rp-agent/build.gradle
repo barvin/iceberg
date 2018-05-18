@@ -1,0 +1,7 @@
+description = 'Iceberg Report Portal TestNg agent'
+
+dependencies {
+    compile project(':reports:report-portal-testng-agent')
+    compile project(':google-test-commons')
+    compile project(':config')
+}
