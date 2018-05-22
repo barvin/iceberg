@@ -5,7 +5,7 @@ apply plugin: 'application'
 dependencies {
     compile project(':config')
     compile project(':business-steps:google-ui-steps')
-    compile project(':reports:report-portal-testng-agent')
+    compile project(':reports:iceberg-rp-agent')
     compile "org.testng:testng:${depVersions.testng}"
 }
 
@@ -18,17 +18,13 @@ run {
     systemProperties System.getProperties()
 }
 
-sourceSets {
-    test.java.srcDir "src/main"
-}
-
 test {
     dependsOn 'cleanTest'
     useTestNG()
     include System.getProperty('testng.tests', '**/*.class')
     options {
         listeners = [
-            'ReportPortalTestNGListener',
+            'org.iceberg.reportportal.IcebergTestNGListener',
             'com.codeborne.selenide.testng.ScreenShooter'
         ].toSet()
     }

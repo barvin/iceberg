@@ -11,19 +11,22 @@ public class ReportPortalTestNGListener implements ITestNGListener, IExecutionLi
     private IReportPortalService testNGService;
 
     public ReportPortalTestNGListener() {
-        if ("true".equals(System.getProperty("rp.enable"))) {
-            this.testNGService = new ReportPortalService();
-        } else {
-            this.testNGService = new ReportPortalServiceEmpty();
-        }
     }
 
-    public ReportPortalTestNGListener(IReportPortalService testNGService) {
+    protected void setTestNGService(IReportPortalService testNGService) {
         this.testNGService = testNGService;
     }
 
     @Override
     public void onExecutionStart() {
+        ReportPortalProperties.copyRpPropertiesToSystemProperties();
+        if (testNGService == null) {
+            if ("true".equals(System.getProperty("rp.enable"))) {
+                testNGService = new ReportPortalService();
+            } else {
+                testNGService = new ReportPortalServiceEmpty();
+            }
+        }
         testNGService.startLaunch();
     }
 
