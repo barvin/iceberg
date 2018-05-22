@@ -1,9 +1,11 @@
+import org.qatools.rp.logback.ReportPortalAppender
+
 appender("STDOUT", ConsoleAppender) {
     encoder(PatternLayoutEncoder) {
         pattern = "%date %level [%logger{0}]: %msg%n"
     }
 }
-appender("ReportPortalAppender", org.iceberg.reportportal.logback.appender.ReportPortalAppender) {
+appender("ReportPortalAppender", ReportPortalAppender) {
     encoder(PatternLayoutEncoder) {
         pattern = "%level [%logger{0}]: %msg%n"
     }

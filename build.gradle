@@ -11,7 +11,7 @@ subprojects {
     ext.depVersions = [
         slf4j      : '1.7.25',
         logback    : '1.2.3',
-        rpClient   : '1.1.4',
+        rpClient   : '4.0.4',
         selenide   : '4.8',
         groovy     : '2.4.13',
         commonsLang: '3.7',
@@ -21,6 +21,7 @@ subprojects {
     dependencies {
         compile "org.slf4j:slf4j-api:${depVersions.slf4j}"
         compile "ch.qos.logback:logback-classic:${depVersions.logback}"
+        compile "org.qatools:report-portal-logger-logback:${depVersions.rpClient}"
         compile "org.codehaus.groovy:groovy-all:${depVersions.groovy}"
     }
 }

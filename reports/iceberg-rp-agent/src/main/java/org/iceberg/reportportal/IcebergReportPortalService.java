@@ -1,13 +1,16 @@
 package org.iceberg.reportportal;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
+
 import org.iceberg.test_commons.AppComponent;
 import org.qatools.reportportal.ReportPortalService;
 import org.testng.ITestResult;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Function;
+import com.google.common.collect.Sets;
 
 public class IcebergReportPortalService extends ReportPortalService {
     private static final String DEFAULT_COMPONENT = "Undefined component";
@@ -19,4 +22,13 @@ public class IcebergReportPortalService extends ReportPortalService {
                         .orElse(DEFAULT_COMPONENT)
         );
     }
+
+    @Override
+    protected Set<String> getTestRowTags(ITestResult testResult) {
+        Set<String> tags = Sets.newHashSet();
+        List<String> groupsList = Arrays.asList(testResult.getMethod().getGroups());
+        groupsList.stream().filter(AppComponent::isComponent).forEach(c -> tags.add("component:" + c));
+        return tags;
+    }
+
 }
