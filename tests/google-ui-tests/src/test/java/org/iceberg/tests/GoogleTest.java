@@ -6,17 +6,17 @@ import org.iceberg.test_commons.AppComponent;
 import org.testng.annotations.Test;
 
 public class GoogleTest extends BaseTest {
-    @Test(description = "Very first test", groups = { AppComponent.SEARCH })
+    @Test(testName = "Very first test", groups = { AppComponent.SEARCH })
     public void veryFirstGoogleTest() {
         NavigationSteps.openWebApp();
         SearchSteps.performSearchFor("aaa");
-        SearchSteps.checkNumberOfResults(10);
+        SearchSteps.checkNumberOfResults(9);
     }
 
-    @Test(description = "Second test", groups = { AppComponent.SEARCH })
+    @Test(testName = "Second test", groups = { AppComponent.SEARCH })
     public void secondGoogleTest() {
         NavigationSteps.openWebApp();
         SearchSteps.performSearchFor("bbb");
-        SearchSteps.checkNumberOfResults(5);
+        SearchSteps.checkNumberOfResults(10);
     }
 }

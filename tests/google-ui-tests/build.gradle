@@ -9,9 +9,9 @@ dependencies {
     compile "org.testng:testng:${depVersions.testng}"
 }
 
-mainClassName = 'org.iceberg.runner.Runner'
-
 run {
+    classpath = sourceSets.test.runtimeClasspath
+    main = 'org.iceberg.runner.Runner'
     if (System.getProperty('args') != null) {
         args System.getProperty('args').split(' ')
     }

@@ -45,25 +45,25 @@ public class ReportPortalTestNGListener implements ITestNGListener, IExecutionLi
 
     @Override
     public void onTestStart(ITestResult testResult) {
-        testNGService.startTestRow(testResult);
+        testNGService.startMethod(testResult);
     }
 
     @Override
     public void onTestSuccess(ITestResult testResult) {
-        testNGService.finishTestRow(Statuses.PASSED, testResult);
+        testNGService.finishMethod(Statuses.PASSED, testResult);
     }
 
     @Override
     public void onTestFailure(ITestResult testResult) {
         testNGService.sendReportPortalMsg(testResult);
-        testNGService.finishTestRow(Statuses.FAILED, testResult);
+        testNGService.finishMethod(Statuses.FAILED, testResult);
     }
 
     @Override
     public void onTestSkipped(ITestResult testResult) {
-        testNGService.startTestRow(testResult);
+        testNGService.startMethod(testResult);
         testNGService.sendReportPortalMsg(testResult);
-        testNGService.finishTestRow(Statuses.SKIPPED, testResult);
+        testNGService.finishMethod(Statuses.SKIPPED, testResult);
     }
 
     @Override
