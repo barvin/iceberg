@@ -27,6 +27,7 @@ import org.testng.ITestResult;
 import com.epam.ta.reportportal.ws.model.EntryCreatedRS;
 import com.epam.ta.reportportal.ws.model.FinishExecutionRQ;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
+import com.epam.ta.reportportal.ws.model.ParameterResource;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.TestItemResource;
 import com.epam.ta.reportportal.ws.model.launch.Mode;
@@ -95,14 +96,19 @@ public class ReportPortalService implements IReportPortalService {
     }
 
     @Override
-    public void startTestRow(ITestResult testResult) {
+    public void startMethod(ITestResult testResult) {
         if (testResult.getAttribute(RP_ID) != null) {
             return;
         }
         createPathIfNeeded(testResult);
 
         String testPath = testResult.getTestClass().getName() + testResult.getMethod().getMethodName();
-        String testName = testResult.getMethod().getDescription();
+        String testName;
+        if (testResult.getTestName() != null) {
+            testName = testResult.getTestName();
+        } else {
+            testName = testResult.getMethod().getMethodName();
+        }
         if (!testPath.equals(testContext.getCurrentTestPath())) {
             if (testContext.getCurrentTestPath() != null) {
                 finishTest();
@@ -120,7 +126,8 @@ public class ReportPortalService implements IReportPortalService {
         rq.setDescription(createTestRowDescription(testResult));
         rq.setStartTime(Calendar.getInstance().getTime());
         rq.setType("STEP");
-        rq.setTags(getTestRowTags(testResult));
+        rq.setTags(createTestStepTags(testResult));
+        rq.setParameters(createStepParameters(testResult));
         EntryCreatedRS rs = null;
         try {
             rs = reportPortal.startTestStepItem(testContext.getCurrentTestId(), rq);
@@ -136,7 +143,7 @@ public class ReportPortalService implements IReportPortalService {
     }
 
     @Override
-    public void finishTestRow(String status, ITestResult testResult) {
+    public void finishMethod(String status, ITestResult testResult) {
         FinishTestItemRQ rq = new FinishTestItemRQ();
         rq.setEndTime(Calendar.getInstance().getTime());
         rq.setStatus(status);
@@ -192,8 +199,27 @@ public class ReportPortalService implements IReportPortalService {
         return Collections.emptyList();
     }
 
-    protected Set<String> getTestRowTags(ITestResult testResult) {
+    protected Set<String> createTestStepTags(ITestResult testResult) {
         return new HashSet<>(Arrays.asList(testResult.getMethod().getGroups()));
+    }
+
+    /**
+     * Extension point to customize Report Portal test parameters
+     *
+     * @param testResult TestNG's testResult context
+     * @return Test/Step Parameters being sent to Report Portal, by default - no parameters
+     */
+    protected List<ParameterResource> createStepParameters(ITestResult testResult) {
+        return null;
+    }
+
+    protected String createTestDescription(ITestResult testResult) {
+        List<String> groupsWithColon = Arrays.stream(testResult.getMethod().getGroups()).filter(g -> g.contains(":"))
+                .collect(Collectors.toList());
+        if (!groupsWithColon.isEmpty()) {
+            return "[ " + StringUtils.join(groupsWithColon, "; ") + " ]";
+        }
+        return StringUtils.EMPTY;
     }
 
     private void finishSuites() {
@@ -316,15 +342,6 @@ public class ReportPortalService implements IReportPortalService {
         } catch (ReportPortalClientException e) {
             LOGGER.error("Unable to start component suite in ReportPortal", e);
         }
-    }
-
-    private String createTestDescription(ITestResult testResult) {
-        List<String> groupsWithColon = Arrays.stream(testResult.getMethod().getGroups()).filter(g -> g.contains(":"))
-                .collect(Collectors.toList());
-        if (!groupsWithColon.isEmpty()) {
-            return "[ " + StringUtils.join(groupsWithColon, "; ") + " ]";
-        }
-        return StringUtils.EMPTY;
     }
 
     private String createTestRowDescription(ITestResult testResult) {

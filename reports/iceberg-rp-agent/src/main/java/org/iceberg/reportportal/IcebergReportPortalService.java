@@ -24,7 +24,7 @@ public class IcebergReportPortalService extends ReportPortalService {
     }
 
     @Override
-    protected Set<String> getTestRowTags(ITestResult testResult) {
+    protected Set<String> createTestStepTags(ITestResult testResult) {
         Set<String> tags = Sets.newHashSet();
         List<String> groupsList = Arrays.asList(testResult.getMethod().getGroups());
         groupsList.stream().filter(AppComponent::isComponent).forEach(c -> tags.add("component:" + c));

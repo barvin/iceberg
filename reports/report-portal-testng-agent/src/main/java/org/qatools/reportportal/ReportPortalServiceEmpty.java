@@ -12,11 +12,11 @@ public class ReportPortalServiceEmpty implements IReportPortalService {
     }
 
     @Override
-    public void startTestRow(ITestResult testResult) {
+    public void startMethod(ITestResult testResult) {
     }
 
     @Override
-    public void finishTestRow(String status, ITestResult testResult) {
+    public void finishMethod(String status, ITestResult testResult) {
     }
 
     @Override

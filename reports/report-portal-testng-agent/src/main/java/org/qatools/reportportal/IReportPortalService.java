@@ -8,9 +8,9 @@ public interface IReportPortalService {
 
     void finishLaunch();
 
-    void startTestRow(ITestResult testResult);
+    void startMethod(ITestResult testResult);
 
-    void finishTestRow(String status, ITestResult testResult);
+    void finishMethod(String status, ITestResult testResult);
 
     void sendReportPortalMsg(final ITestResult result);
 
